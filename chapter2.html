@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="fr" dir="ltr">
+
+<head>
+  <meta charset="utf-8">
+  <link rel="stylesheet" href="css/styles.css">
+  <title>TP de Programmation Système sous UNIX</title>
+  <link rel="shortcut icon" href="image/logo.ico">
+</head>
+
+<body>
+  <header>
+    <div class="nav">
+      <a class="link" href="chapter4.html">Chapitre 4</a>
+      <a class="link" href="chapter3.html">Chapitre 3</a>
+      <a class="select" href="chapter2.html"><b>Chapitre 2</b></a>
+      <a class="link" href="chapter1.html">Chapitre 1</a>
+      <a class="link" href="chapter0.html">Chapitre 0</a>
+      <a class="link" id="back" href="index.html"><b>Retour</b></a>
+    </div>
+  </header>
+
+  <main>
+    <section class="scroll">
+      <h3>Télécharger les TPs</h3>
+      <a href="documents/TP1.pdf" target="blank">TP 1</a><br>
+      <a href="documents/TP2.pdf" target="blank">TP 2</a><br>
+      <a href="documents/TP3.pdf" target="blank">TP 3</a><br>
+      <a href="documents/TP4.pdf" target="blank">TP 4</a><br>
+      <a href="documents/TP5.pdf" target="blank">TP 5</a>
+  </section>
+    <h1 class="title">Chapitre 2</h1>
+    <section class="section1">
+      <h1>Présentation</h1>
+      <div class="">
+        <p>Dans le chapitre 1, nous avons vu comment utiliser les appels-systèmes de bas niveau pour créer
+          et accéder à des fichiers sur le disque. Nous avons notamment mis en évidence leur
+          dépouillement et le nécessité de gérer des tampons mémoire pour améliorer leurs performances.
+          Avec la librairie standard d'E/S, nous disposons de fonctions de haut-niveau, respectant la norme
+          ISO C, donc portables sur d'autres systèmes respectant cette norme.
+          De plus, elles gèrent de manière transparente les outils d'amélioration de l'efficacité des E/S
+          (buffers de taille optimale, etc…).
+          Néanmoins, elles introduisent d'autres problèmes que nous verrons aussi dans ce chapitre.</p>
+      </div>
+    </section>
+    <section class="section4">
+      <h1 class="maintitle">Pointeur de flux</h1>
+      <div class="div_2elem">
+        <p>Dans le chapitre 1, nous associions aux fichiers ouverts des descripteurs de fichiers par lesquels
+          nous accédions aux fichiers.<br><br>
+          Avec la librairie standard, lors de l'ouverture ou de la création d'un fichier, nous lui associerons
+          un flux de données, et y accèderons via un pointeur de flux de type <strong>FILE *</strong>.<br><br>
+          Le type FILE est une structure comprenant plusieurs champs : on y trouve notamment le
+          descripteur du fichier ainsi que les adresses et tailles du buffer utilisé, entre autres.
+      </div>
+      <div class="aside_right">
+        <p>Au final, comme on le voit avec la présence du descripteur de fichier dans cette structure, les
+          fonctions de la librairie standard vont utiliser les appels-système du SGF car ce sont les seuls
+          moyens d'accéder aux fichiers. Elles vont simplement ajouter une couche de gestion des buffers,
+          entre autres fonctionnalités, et permettre ainsi de minimiser le nombre d'appels-système.<br><br>
+          Les trois canaux de communication ouverts lors de la création d'un processus possèdent aussi un
+          pointeur de flux de type FILE *: </p>
+        <ul>
+          <li>stdin pour l'entrée standard.</li>
+          <li>stdout pour la sortie standard.</li>
+          <li>stderr pour la sortie d'erreur standard.</li>
+        </ul>
+
+      </div>
+
+    </section>
+    <section class="section2">
+      <h2>Ouverture d'un flux</h2>
+      <div class="div_2elem separator_neg">
+        <p>Nom de la fonction : <strong>fopen</strong></p>
+
+        <h4>Prototype :</h4>
+        <p>FILE *fopen(char *pathfile, char*type);</p>
+
+        <h4>Valeurs de retour :</h4>
+        <p>Si succès, retourne un pointeur de flux, <br>NULL sinon.</p>
+
+        <h4>Fonctionnement :</h4>
+        <p>pathfile : nom et éventuellement chemin du fichier à ouvrir/créer. <br> type : mode d'ouverture du fichier :</p>
+        <ul>
+          <li>"r" : ouverture en lecture seule.</li>
+          <li>"w" : ouverture en écriture seule avec écrasement préalable du fichier s'il existe déjà.</li>
+          <li>"a" : ouverture en écriture seule en mode ajout en fin de fichier.</li>
+          <li>"r+" : ouverture en lecture et écriture, positionnement en début de fichier.</li>
+          <li>"w+": ouverture en lecture et écriture, avec écrasement préalable du fichier s'il existe déjà.</li>
+          <li>"a+" : ouverture en lecture et écriture en mode ajout en fin de fichier.</li>
+        </ul>
+        <p>
+          Les systèmes de type Windows demandent de préciser si le fichier à ouvrir/créer sera un fichier
+          binaire ou non, il faut donc ajouter un b aux modes d'ouverture ("rb", "wb", "ab", "rb+", "wb+",
+          "ab+"). <br> Linux ne différenciant pas les fichiers binaires des autres, ce "b" n'est pas nécessaire et sera
+          ignoré s'il est précisé.
+        </p>
+        <h4>Récapitulatif des modes d'ouvertures et de leurs contraintes :</h4>
+        <table border="1" BORDERCOLOR="#ffF">
+          <tr>
+            <th>Contraintes</th>
+            <td class="td">"r"</td>
+            <td class="td">"w"</td>
+            <td class="td">"a"</td>
+            <td class="td">"r+"</td>
+            <td class="td">"w+"</td>
+            <td class="td">"a+"</td>
+          </tr>
+          <tr>
+            <th>Le fichier doit exister</th>
+            <td class="td">x</td>
+            <td class="td"></td>
+            <td class="td"></td>
+            <td class="td">x</td>
+            <td class="td"></td>
+            <td class="td"></td>
+          </tr>
+          <tr>
+            <th>Le fichier est vidé s'il existe déjà</th>
+            <td class="td"></td>
+            <td class="td">x</td>
+            <td class="td"></td>
+            <td class="td"></td>
+            <td class="td">x</td>
+            <td class="td"></td>
+          </tr>
+          <tr>
+            <th>Le flux peut être llu</th>
+            <td class="td">x</td>
+            <td class="td"></td>
+            <td class="td"></td>
+            <td class="td">x</td>
+            <td class="td">x</td>
+            <td class="td">x</td>
+          </tr>
+          <tr>
+            <th>Le flux peut être écrit</th>
+            <td class="td"></td>
+            <td class="td">x</td>
+            <td class="td">x</td>
+            <td class="td">x</td>
+            <td class="td">x</td>
+            <td class="td">x</td>
+          </tr>
+          <tr>
+            <th>Le flux ne sera écrit qu'en fin de fichier</th>
+            <td class="td"></td>
+            <td class="td"></td>
+            <td class="td">x</td>
+            <td class="td"></td>
+            <td class="td"></td>
+            <td class="td">x</td>
+          </tr>
+        </table>
+      </div>
+      <div class="aside_right">
+        <h4>Exemples :</h4>
+        <code>
+          FILE *fp; <br>
+          fp=fopen("/home/esgi/données","w+"); <br>
+          if (fp==NULL) <br>
+          { <br>
+          printf("Erreur d'ouverture\n"); <br>
+          exit(-1); <br>
+          } <br>
+        </code>
+        <p>Le fichier "/home/esgi/données" sera écrasé s'il existe, créé sinon, et ouvert en lecture et
+          écriture.</p>
+        <code>
+          FILE *filep; <br>
+          filep=fopen("data","r"); <br>
+          if (filep==NULL) <br>
+          { <br>
+          printf("Erreur d'ouverture\n"); <br>
+          exit(-1); <br>
+          } <br>
+        </code>
+        <p>Le fichier "data" du repertoire courant sera ouvert en lecture seule. S'il n'existe pas, il y aura une
+          erreur d'ouverture.</p>
+        </ul>
+      </div>
+    </section>
+    <section class="section1">
+      <h1 class="maintitle">Lecture et écriture non formatées</h1>
+      <div class="">
+        <p>Il existe 3 types d'E/S non formatées :</p>
+        <ul>
+          <li>par caractère : on lit et/ou écrit un caractère à la fois.</li>
+          <li>par ligne : on lit et/ou écrit une ligne à la fois.</li>
+          <li>binaires : on lit et/ou écrit des objets binaires.</li>
+        </ul>
+      </div>
+      <div class="div_2elem separator_pos">
+        <h4>1 – E/S par caractère :</h4>
+        <p><i>a - Lecture :</i></p>
+        <p>Nom de la fonction : <strong>fgets</strong></p>
+        <h4>Prototype :</h4>
+        <p>int fgets(char *ch, int n, FILE *fp);</p>
+        <h4>Valeurs de retour :</h4>
+        <p>Si succès, retourne l'adresse de la chaîne lue, <br> EOF sinon.</p>
+        <h4>Fonctionnement :</h4>
+        <p>
+          ch : adresse de la chaîne de caractères où sera stockée la ligne lue. <br>
+          n : nombre de caractères à lire au maximum. <br>
+          fp : pointeur de flux du fichier où lire.
+        </p>
+        <p>
+          La lecture s'arrêtera au premier retour chariot rencontré ou si n caractères ont été lus. Le retour
+          chariot sera inclus dans la chaîne lue. Un caractère de fin de chaîne sera ajouté à la chaîne lue.
+        </p>
+        <h4>Exemple :</h4>
+        <code>
+          FILE *fp; <br>
+          char chaine[20]; <br>
+          fp=fopen("essai_fputs","w+"); <br>
+          printf("Entrez une chaîne :"); <br>
+          fgets(chaine,20,stdin); // lit une chaîne sur stdin d'au plus 20 caractère <br>
+          fputs(chaine,fp); // écrit la chaîne lue dans le fichier fp
+        </code>
+      </div>
+      <div class="aside_right">
+        <p><i>b - Ecriture :</i></p>
+        <p>Nom de la fonction : <strong>fputc</strong></p>
+        <h4>Prototype :</h4>
+        <p>int fputc(int c, FILE *fp);</p>
+        <h4>Valeurs de retour :</h4>
+        <p>
+          Si succès, retourne le caractère c, <br>
+          EOF sinon (EOF est un caractère spécial signifiant End Of File).
+        </p>
+        <h4>Fonctionnement :</h4>
+        <p>
+          c : caractère à écrire. <br>
+          fp : pointeur de flux du fichier où écrire le caractère.
+        </p>
+      </div>
+      <hr>
+      <div class="">
+        <h4>2 – E/S binaires :</h4>
+        <p>
+          Elles permettent de lire ou d'écrire des structures complexes en une seule opération. Les
+          données écrites le seront en binaire et ne seront, par conséquent, pas lisibles simplement (avec
+          cat par exemple).
+        </p>
+      </div>
+      <div class="div_2elem">
+        <p><i>a - Ecriture :</i></p>
+        <p>Nom de la fonction : <strong>fwrite</strong>.</p>
+        <h4>Prototype :</h4>
+        <p>size_t fwrite(void *ptr, size_t sz, int nb, FILE *fp);</p>
+        <h4>Valeurs de retour :</h4>
+        <p>
+          Si succès, retourne le nombre d'objets écrits,
+          une valeur inférieure au nombre d'objets à écrire sinon (on ne peut distinguer si c'est la fin du
+          fichier qui a été étteinte ou s'il ya eu une erreur sans utiliser une autre fonction).
+        </p>
+        <h4>Fonctionnement :</h4>
+        <p>
+          ptr : adresse mémoire où est stocké le premier objet à écrire. <br>
+          sz : taille d'un objet. <br>
+          nb : nombre d'objets à écrire. <br>
+          fp : pointeur de flux du fichier où écrire.
+        </p>
+      </div>
+      <div class="aside_right">
+        <h4>Exemple :</h4>
+        <code>
+          struct client
+          { <br>
+          char nom[20]; <br>
+          int age; <br>
+          int solde;
+          }; <br>
+          main()
+          { <br>
+          FILE *fp; <br>
+          struct client cl[3]; <br>
+          int i; <br>
+          size_t nblus; <br>
+          fp=fopen("essaibinaire","w+"); <br>
+          for (i=0;i<\3;i++) { <br>
+            printf("Nom :"); <br>
+            scanf("%s",&cl[i].nom); <br>
+            printf("Age :"); <br>
+            scanf("%d",&cl[i].age); <br>
+            printf("Solde :"); <br>
+            scanf("%d",&cl[i].solde);
+            } <br>
+            nblus=fwrite(cl,sizeof(struct client),3,fp); <br>
+            if (nblus<\3) <br>
+              printf("Erreur ou fin de fichier atteinte\n");
+              }
+        </code>
+      </div>
+      <hr>
+      <div class="div_2elem">
+        <p><i>b - Lecture :</i></p>
+        <p>Nom de la fonction : <strong>fread.</strong></p>
+        <h4>Prototype :</h4>
+        <p>size_t fread(void *ptr, size_t sz, int nb, FILE *fp);</p>
+        <h4>Valeurs de retour :</h4>
+        <p>
+          Si succès, retourne le nombre d'objets lus,
+          une valeur inférieure au nombre d'objets à lire sinon (on ne peut distinguer si c'est la fin du
+          fichier qui a été étteinte ou s'il ya eu une erreur sans utiliser une autre fonction).
+        </p>
+        <h4>Fonctionnement :</h4>
+        <p>
+          ptr : adresse mémoire où sera stocké le premier objet à lire. <br>
+          sz : taille d'un objet. <br>
+          nb : nombre d'objets à lire. <br>
+          fp : pointeur de flux du fichier où lire.
+        </p>
+      </div>
+      <div class="aside_right">
+        <h4>Exemple :</h4>
+        <code>
+          struct client
+          { <br>
+          char nom[20]; <br>
+          int age; <br>
+          int solde;
+          }; <br>
+          main()
+          { <br>
+          FILE *fp; <br>
+          struct client cl; <br>
+          int i; <br>
+          size_t nblus; <br>
+          fp=fopen("essaibinaire","r"); <br>
+          while ((nblus=fread(&cl,sizeof(struct client),1,fp))==1)
+          { <br>
+          printf("Nom : %s\n",cl.nom); <br>
+          printf("Age : %d\n",cl.age); <br>
+          printf("Solde : %d\n",cl.solde);
+          }
+          }
+        </code>
+      </div>
+      <hr>
+      <h4>3 - Problèmes :</h4>
+      <p>
+        Les E/S binaires posent un problème important : elles ne doivent être utilisées en lecture que sur
+        le même système sur lequel les données ont été écrites. Ce qui limite beaucoup leur usage,
+        empêchant de récupérer des données sur un réseau notamment.
+      </p>
+      <p>En effet, il y a 2 points qui posent problème :</p>
+      <ul>
+        <li>
+          Les décalages des membres dans les structures pour garantir un alignement mémoire
+          optimal ne sont pas les mêmes selon les systèmes.
+        </li>
+        <li>
+          L'implémentation binaire des données multi-octets pour les entiers ou les flottants
+          diffèrent selon les architectures machines.
+        </li>
+      </ul>
+      <p>
+        Ces différences peuvent entraîner une incohérence des données lues sur une machine qui
+        n'utilise pas les mêmes décalages ou implémentations que celle sur laquelle les données ont été
+        écrites.
+      </p>
+      </div>
+    </section>
+    <section class="section3">
+      <h1>Positionnement dans un flux</h1>
+      <div class="">
+        <ul>
+          <li>Nom de la fonction : <strong>fseek</strong></li>
+        </ul>
+        <h4>Prototype :</h4>
+        <p>int fseek(FILE *fp, long nb, int depart);</p>
+        <h4>Valeurs de retour :</h4>
+        <p>Si succès, retourne 0, -1 sinon.</p>
+        <h4>Fonctionnement :</h4>
+        <p>
+          fp : pointeur du flux dont on veut déplacer la tête de lecture/écriture. <br>
+          nb : valeur du déplacement en octets. <br>
+          depart : point de départ du déplacement.
+        </p>
+        <p>La valeur de "depart" peut être :</p>
+        <ul>
+          <li>
+            SEEK_SET : la nouvelle position sera calculée par rapport au début du fichier <br>
+            o nouvelle_position=nb</li>
+          <li>
+            SEEK_CUR : la nouvelle position sera calculée par rapport à la position actuelle <br>
+            o nouvelle_position=position_actuelle+nb
+          </li>
+          <li>
+            SEEK_END : la nouvelle position sera calculée par rapport à la fin du fichier <br>
+            o nouvelle_position=fin_du_fichier+nb
+          </li>
+        </ul>
+        <p>
+          Pour une valeur de SEEK_CUR ou SEEK_END, nb peut être positif ou négatif (on peut reculer
+          dans le fichier). Pour SEEK_SET, nb ne peut être que positif (on ne peut reculer au-delà du début
+          du fichier).
+        </p>
+        <p>
+          Le cas où le départ est la fin du fichier (SEEK_END) et le déplacement positif aura le même effet
+          que pour l'appel-système lseek (cf Chapitre 1, V).
+        </p>
+        <div class="div_2elem sep">
+          <ul>
+            <li>Nom de la fonction : <strong>ftell</strong></li>
+          </ul>
+          <h4>Prototype :</h4>
+          <p>long ftell(FILE *fp);</p>
+          <h4>Valeurs de retour :</h4>
+          <p>Si succès, retourne la position de la tête de lecture/écriture, -1 sinon.</p>
+          <h4>Fonctionnement :</h4>
+          <p>fp : pointeur de flux du fichier.</p>
+        </div>
+        <div class="aside_right">
+          <ul>
+            <li>Nom de la fonction : <strong>rewind</strong></li>
+          </ul>
+          <h4>Prototype :</h4>
+          <p>void rewind(FILE *fp);</p>
+          <h4>Valeurs de retour :</h4>
+          <p>Aucune.</p>
+          <h4>Fonctionnement :</h4>
+          <p>fp : pointeur de flux du fichier.</p>
+          <p>rewind ramène la tête de lecture/écriture au début du fichier concerné. C'est l'équivalent de fseek(fp,0,SEEK_SET).</p>
+        </div>
+    </section>
+    <section class="section1">
+      <h1>Fermeture de fichier :</h1>
+      <p>Nom de la fonction : fclose</p>
+      <h4>Prototype :</h4>
+      <p>int fclose(FILE *fp);</p>
+      <h4>Valeurs de retour :</h4>
+      <p>Si succès, retourne 0, EOF sinon.</p>
+      <h4>Fonctionnement :</h4>
+      <p>fp : pointeur de flux du fichier à fermer. </p>
+      <p>Un appel à fclose provoque le vidage du buffer associé au flux et libère le pointeur de flux.</p>
+      <p id="nb">
+        NB : Seul les buffers niveau utilisateur sont vidés lors d'un appel à fclose, pas les buffers niveau
+        noyau
+      </p>
+    </section>
+    <section class="section2">
+      <h1>Buffering</h1>
+      <p>
+        La grande différence entre les E/S de bas-niveau et les E/S de la librairie standard, c'est
+        l'utilisation de tampons en mode utilisateur par ces dernières.
+        Elles gèrent automatiquement, et de manière transparente pour l'utilisateur des buffers mémoires
+        permettant d'optimiser le nombre d'accès disques.
+      </p>
+      <p>Il existe trois types de buffering :</p>
+      <ul>
+        <li>
+          Fully Buffered : les E/S sont réellement effectuées quand le tampon d'E/S est plein.
+          C'est le mode de buffering utilisé par défaut pour les fichiers sur le disque. Le tampon
+          utilisé est alloué lors de la première E/S effectuée sur le flux.
+        </li>
+        <li>
+          Line Buffered : Les E/S sont réellement effectuées lorsqu'un un caractère "newline"
+          est rencontré en entrée ou en sortie ou lorsque le tampon est plein. C'est le mode de
+          buffering par défaut des E/S des terminaux, notamment de la sortie standard et de
+          l'entrée standard. C'est pour cette raison qu'il faut mettre un "\n" dans un printf pour
+          être sur que l'affichage se fera bien à l'endroit voulu dans le code.
+        </li>
+        <li>
+          Unbuffered : Il n'y a pas de tampon : les E/S se feront immédiatement après les
+          appels-système. C'est le mode de buffering par défaut de la sortie d'erreur standard :
+          en effet, on veut que les erreurs soient affichées dès qu'elles se produisent, sans
+          délai.
+        </li>
+      </ul>
+      <p>Il est possible de modifier le mode de buffering d'un flux avec la fonction setvbuf.</p>
+      <p>Nom de la fonction : <strong>setvbuf</strong></p>
+      <h4>Prototype :</h4>
+      <p>int setvbuf(FILE *fp, char *buf, int mode, size_t nb);</p>
+      <h4>Valeurs de retour :</h4>
+      <p>Si succès, retourne 0, -1 sinon.</p>
+      <h4>Fonctionnement :</h4>
+      <p>
+        fp : pointeur du flux dont on veut modifier le mode de buffering. <br>
+        buf : adresse mémoire du tampon à utiliser. <br>
+        mode : type de buffering :
+      </p>
+      <ul>
+        <li>_IOFBF : fully buffered </li>
+        <li>_IOLBF : line buffered </li>
+        <li>_IONBF : unbuffered</li>
+      </ul>
+      <p>nb : taille du buffer en octets.</p>
+      <p>
+        Si le mode est _IONBF, buf et nb sont ignorés. <br>
+        On peut laisser le noyau choisir l'adresse du buffer et sa taille en donnant la valeur NULL à buf. <br>
+        setvbuf doit être appelée après l'ouverture du flux, mais avant toute opération d'E/S sur le flux.
+      </p>
+    </section>
+    <section class="section1">
+      <h2 class="maintitle">Fonctions diverses</h2>
+      <ul>
+        <li>int feof(FILE *fp);</li>
+      </ul>
+      <p>Retourne une valeur supérieure à 0 si la fin du fichier pointé par fp est atteinte, 0 sinon.</p>
+
+      <ul>
+        <li>int fileno(FILE *fp);</li>
+      </ul>
+      <p>
+        Retourne le descripteur de fichier associé au fichier pointé par le flux fp. On peut alors utiliser les
+        appels-système du SGF sur ce fichier grâce à ce descripteur.
+      </p>
+
+      <ul>
+        <li>FILE *fdopen(int fd, char *mode); </li>
+      </ul>
+      <p>
+        Ouvre un flux à partir d'un descripteur de fichier existant fd, le mode d'ouverture sera donné
+        dans mode (voir fopen). Retourne le pointeur de flux associé.
+      </p>
+      <ul>
+        <li>int fflush(FILE *fp);</li>
+      </ul>
+      <p>
+        Force l'écriture de toutes les données mises en tampon pour le fichier pointé par le flux fp.
+        Si fp==NULL, tous les flux en sortie seront vidés (buffers niveau utilisateur seulement, voir
+        fclose).
+      </p>
+    </section>
+  </main>
+</body>
+
+</html>

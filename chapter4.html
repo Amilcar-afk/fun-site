@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="fr" dir="ltr">
+
+<head>
+	<meta charset="utf-8">
+	<link rel="stylesheet" href="css/styles.css">
+	<title>TP de Programmation Système sous UNIX</title>
+	<link rel="shortcut icon" href="image/logo.ico">
+</head>
+
+<body>
+	<header>
+		<div class="nav">
+			<a class="select" href="chapter4.html"><b>Chapitre 4</b></a>
+			<a class="link" href="chapter3.html">Chapitre 3</a>
+			<a class="link" href="chapter2.html">Chapitre 2</a>
+			<a class="link" href="chapter1.html">Chapitre 1</a>
+			<a class="link" href="chapter0.html">Chapitre 0</a>
+			<a class="link" id="back" href="index.html"><b>Retour</b></a>
+		</div>
+	</header>
+
+	<main>
+		<section class="scroll">
+			<h3>Télécharger les TPs</h3>
+			<a href="documents/TP1.pdf" target="blank">TP 1</a><br>
+			<a href="documents/TP2.pdf" target="blank">TP 2</a><br>
+			<a href="documents/TP3.pdf" target="blank">TP 3</a><br>
+			<a href="documents/TP4.pdf" target="blank">TP 4</a><br>
+			<a href="documents/TP5.pdf" target="blank">TP 5</a>
+		</section>
+		<h1 class="title">Chapitre 4</h1>
+		<section class="section1">
+			<h1>Présentation</h1>
+			<div class="">
+				<p>
+					Les signaux sont des interruptions logicielles permettant de gérer des évènements asynchrones.
+					Ces évènements peuvent être originaires de l'extérieur du système (par exemple, l'appui de
+					CTRL+C par l'utilisateur) ou venir d'une activité d'un programme ou du noyau (par exemple, une
+					division par zéro).<br>
+					Ils constituent aussi une forme primitive de communication inter-processus sans transport de
+					données.
+				</p>
+			</div>
+		</section>
+		<section class="section4">
+			<h1>Cycle de vie d'un signal</h1>
+			<div class="">
+				<p>
+					Un signal a un cycle de vie très précis :
+				</p>
+				<ul>
+					<li>Tout d'abord, un signal est généré par le noyau ou un processus.</li>
+					<li>Puis, le noyau stocke le signal jusqu'à ce qu'il puisse le délivrer au destinataire.</li>
+					<li>Enfin, le processus destinataire gère le signal qu'il a reçu.</li>
+				</ul>
+				<p>
+					A la réception d'un signal, le processus a trois possibilités :
+				</p>
+				<ul>
+					<li>Ignorer le signal : le signal est bien reçu, mais le processus continue son exécution
+						normalement.</li>
+					<li>Détourner le signal : le signal est reçu et le processus stoppe le déroulement normal de
+						son exécution et appelle une fonction de gestion du signal (handler). A la fin de cette fonction, le
+						processus reprend son exécution à l'endroit exact de l'interruption.</li>
+					<li>Exécuter l'action par défaut : à tout signal est associée une action par défaut (souvent
+						la fin du processus) que le processus exécute à la réception du signal.</li>
+				</ul>
+				<p class="border_neg">
+					NB : Il existe deux signaux qui ne peuvent être ni détournés, ni ignorés : SIGKILL (tue le
+					processus) et SIGSTOP (suspend le processus). En effet, un processus doit toujours pouvoir être
+					interrompu ou stoppé.
+				</p>
+			</div>
+		</section>
+		<section class="section3">
+			<h1>Identifiants de signaux</h1>
+			<div class="">
+				<p>
+					Le noyau référence les signaux par une valeur numérique strictement positive. Il existe NSIG
+					signaux différents. On obtient la liste des signaux disponibles sur une machine avec la commande
+					shell : kill –l .
+				</p>
+				<p>
+					Pour des raisons pratiques et de portabilité, tous les signaux disposent d'un nom symbolique
+					commençant par le préfixe SIG suivi de quelques lettres indiquant la nature du signal.
+				</p>
+				<u>Quelques signaux usuels :</u>
+				<p>SIGALRM (ALaRM) : envoyé par la fonction alarm : ignoré par défaut.</p>
+				<p>
+					SIGCHLD (CHiLD): envoyé par un processus fils à son père quand il se termine : ignoré par
+					défaut. Si le signal SIGCHLD est ignoré par un processus, alors ses processus fils ne passeront
+					plus par l'état zombie quand ils se termineront : ils disparaissent immédiatement de la mémoire.
+				</p>
+				<p>
+					SIGFPE (Floating Point Exception) : envoyé par le noyau à un processus quand il a effectué un
+					calcul arithmétique interdit (division par zéro par exemple ) : termine le processus.
+				</p>
+				<p>
+					SIGINT (INTerrupt) : envoyé au processus quand on presse CTRL+C : termine le processus.
+					SIGKILL : met fin au processus.
+				</p>
+				<p>
+					SIGSEGV (SEGment Violation) : envoyé par le noyau à un processus qui effectue un accès
+					mémoire interdit (accès à de la mémoire dynamique non allouée par exemple, la segmentation
+					fault) : met fin au processus.
+				</p>
+				<p>SIGSTOP : suspend le processus qui le reçoit. </p>
+				<p>
+					SIGTSTP (Terminal SToP) : envoyé au processus quand on presse CTRL+Z : suspend le
+					processus.
+				</p>
+				<p>SIGUSR1 (USeR1) : signal laissé libre pour le programmeur. </p>
+				<p>SIGUSR2 (USeR2) : idem SIGUSR1.</p>
+			</div>
+		</section>
+		<section class="section1">
+			<h1>Envoi de signal</h1>
+			<div class="div_2elem">
+				<h3>1 – Commande kill :</h3>
+				<p>La commande shell kill permet d'envoyer tout type de signal à un processus. </p>
+				<u>Syntaxe :</u>
+				<p>kill <i>-signal pid</i></p>
+				<p>
+					Si on ne spécifie pas le signal à envoyer, kill envoie par défaut le signal SIGTERM qui est
+					l'équivalent de SIGKILL, mais on peut le détourner et l'ignorer.
+				</p>
+				<p>
+					On peut indiquer le signal de 3 façons :<br>
+					- sa valeur numérique : kill -9 1245<br>
+					- son nom complet : kill –SIGKILL 1245<br>
+					- sa terminaison : kill –KILL 1245<br>
+				</p><br><br>
+			</div>
+			<div class="aside_right">
+				<h3>2 – Fonction kill :</h3>
+				<p>Pour envoyer un signal à un processus en C, on utilise la fonction kill.</p>
+				<p>Nom de la fonction : <b>kill</b></p>
+				<u>Prototype :</u>
+				<p><code>int kill(pid_t procnum, int signum);</code></p>
+				<u>Valeurs de retour :</u>
+				<p>
+					Si succès, retourne 0,<br>
+					-1 sinon.
+				</p>
+				<u>Fonctionnement :</u>
+				<p>
+					procnum : PID du processus auquel envoyer le signal.<br>
+					signum : numéro ou identifiant du signal à envoyer.
+				</p>
+			</div>
+			<hr>
+			<div class="div_2elem">
+				<h3>3 – Fonction raise :</h3>
+				<p>La fonction raise permet à un processus de s'envoyer un signal à lui-même.</p>
+				<p>Nom de la fonction : <b>raise</b></p>
+				<u>Prototype :</u>
+				<p><code>int raise(int signum);</code></p>
+				<u>Valeurs de retour :</u>
+				<p>
+					Si succès, retourne 0,<br>
+					-1 sinon.
+				</p>
+				<u>Fonctionnement :</u>
+				<p>signum : numéro ou identifiant du signal à envoyer.</p>
+				<p class="border_pos">
+					NB : raise(sig) est équivalent à kill(getpid(),sig)
+				</p>
+			</div>
+			<div class="aside_right">
+				<h3>4 – La fonction alarm :</h3>
+				<p>
+					La fonction alarm permet de déclencher un compte à rebours (un timer) au bout duquel le signal
+					SIGALRM sera envoyé au processus appelant. Il ne peut y avoir qu'un timer par processus.
+				</p>
+				<p>Nom de la fonction : <b>alarm</b></p>
+				<u>Prototype :</u>
+				<p><code>unsigned int alarm(unsigned int s);</code></p>
+				<u>Valeurs de retour :</u>
+				<p>
+					Si un timer a été démarré précédemment, alarm retourne le nombre de secondes restantes,<br>
+					Sinon, alarm retourne 0.
+				</p>
+				<u>Fonctionnement :</u>
+				<p>s : nombre de secondes du timer.</p>
+			</div>
+		</section>
+		<section class="section2">
+			<h1>Gestion basique des signaux</h1>
+			<div class="div_2elem">
+				<h3>1 – Fonction signal :</h3>
+				<p>Nom de la fonction : <b>signal</b></p>
+				<u>Prototype :</u>
+				<p><code>int signal(int signum, void *handler(int));</code></p>
+				<u>Valeurs de retour :</u>
+				<p>
+					Si succès, retourne le comportement précédent du processus vis-à-vis du signal,
+					SIG_ERR sinon.
+				</p>
+				<u>Fonctionnement :</u>
+				<p>
+					signum : numéro du signal concerné.<br>
+					handler : comportement du processus à la réception du signal :<br>
+					- SIG_IGN : Le signal est ignoré (impossible pour SIGKILL et SIGSTOP).<br>
+					- SIG_DFL : le comportement par défaut vis-à-vis du signal est rétabli.<br>
+					- Une fonction de traitement de signal : elle sera appelée à la réception du signal.
+				</p>
+				<p>Une fonction de traitement de signal aura toujours le même prototype :</p>
+				<p><code>void nom_fonction(int sig); </code></p>
+				<p>
+					Evidemment, elle ne retourne rien : comme on ne sait pas quand elle sera appelée, on ne peut
+					récupérer de résultat.<br>
+					L'entier qu'elle accepte en paramètre prendra la valeur du signal qui a provoqué son appel.
+				</p>
+			</div>
+			<div class="aside_right">
+				<p><u>Exemple :</u>
+					<code>
+						void ctrlc_ctrlz(int sig)<br>
+						{<br>
+						if (sig==SIGINT)<br>
+						printf(" CTRL+C!\n");<br>
+						else if (sig==SIGTSTP)<br>
+						printf(" CTRL+Z\n");<br>
+						}<br>
+						main()<br>
+						{<br>
+						signal(SIGINT,ctrlc_ctrlz);<br>
+						signal(SIGTSTP,ctrlc_ctrlz);<br>
+						printf("Mon PID : %d\n",getpid());<br>
+						printf("pour m'arreter : kill %d\n",getpid());<br>
+						printf("Appuyez sur CTRL+c ou CTRL+z\n");<br>
+						while(1);<br>
+						}<br>
+					</code>
+				</p>
+			</div>
+			<div class="div_2elem">
+				<h3>2 – Fonction pause :</h3>
+				<p>Nom de la fonction : <b>pause</b></p>
+				<u>Prototype :</u>
+				<p><code>int pause(void);</code></p>
+				<u>Fonctionnement :</u>
+				<p>
+					pause() endort le processus appelant qui ne sera réveillé qu'à la réception de n'importe quel
+					signal non ignoré.
+				</p>
+			</div>
+			<div class="aside_right">
+				<h3>3 – Héritage :</h3>
+				<p>
+					Lors de la création d'un processus fils, celui-ci hérite des comportements envers les signaux mis
+					en place par son processus père : détournement, comportement par défaut et ignorance.
+				</p>
+				<p>
+					Par contre, si le processus fils est recouvert par un nouvel exécutable (avec exec), alors tous les
+					signaux détournés par le père sont réinitialisés à leur comportement par défaut pour le fils : les
+					handlers de signaux n'existent plus dans le nouveau processus fils.
+				</p>
+			</div>
+			<hr>
+			<div class="div_2elem">
+				<h3>4 – Correspondances entre numéros et noms de signaux :</h3>
+				<p>
+					On ne manipule les signaux que numériquement, que ce soit à travers leur valeur entière ou
+					symbolique.<br>
+					Or, pour faciliter leur compréhension, il est pratique de pouvoir savoir quel est le nom associé à
+					une valeur numérique.<br>
+					Pour cela, il existe un tableau indexé par les numéros de signaux contenant dans chaque case le
+					nom du signal correspondant :<br>
+				</p>
+				<p><code>extern const char *sys_siglist[];</code></p><br><br><br>
+			</div>
+			<div class="aside_right">
+				<p><u>Exemple :</u><br>
+					<code>
+						void handler(int sig)
+						{<br>
+						printf("signal reçu : %d=%s\n",sig, sys_siglist[sig]);
+						}<br>
+						main()
+						{<br>
+						signal(SIGINT,handler);<br>
+						signal(SIGTSTP,handler);<br>
+						signal(SIGUSR1,handler);<br>
+						signal(SIGUSR2,handler);<br>
+						printf("Mon PID : %d\n",getpid());<br>
+						printf("pour m'arreter : kill %d\n",getpid());<br>
+						printf("Appuyez sur CTRL+c et CTRL+c ou envoyez les signaux SIGUSR
+						et SIGUSR2\n");<br>
+						while(1);<br>
+						}<br>
+					</code></p>
+			</div>
+		</section>
+		<section class="section4">
+			<h1>Gestion avancée des signaux</h1>
+			<div class="">
+				<h3>1 – Ensemble de signaux :</h3>
+				<p>
+					La plupart des fonctions que nous allons voir dans la suite de ce chapitre manipulent les signaux
+					sous la forme d'ensembles de signaux.<br>
+					Un ensemble de signaux est représenté par une variable de type <i>sigset_t</i>.
+				</p>
+				<p>On gère les ensembles de signaux avec des fonctions dédiées : </p>
+				<p>
+					- <code>int sigemptyset(sigset_t *set);</code><br>
+					vide l'ensemble de signaux set. On l'utilise avant toute manipulation d'ensemble pour être
+					sur qu'il soit vide.
+				</p>
+				<p>
+					- <code>int sigfillset(sigset_t *set);</code><br>
+					remplit l'ensemble de signaux set avec tous les signaux du système.
+				</p>
+				<p>
+					- <code>int sigaddset(sigset_t *set, int signo);</code><br>
+					ajoute le signal signo à l'ensemble de signaux set.
+				</p>
+				<p>
+					- <code>int sigdelset(sigset_t *set, int signo);</code><br>
+					supprime le signal signo de l'ensemble de signaux set.
+				</p>
+				<p>
+					- <code>int sigismember(sigset_t *set, int signo);</code><br>
+					retourne 1 si le signal signo est dans l'ensemble de signaux set, 0 sinon.
+				</p>
+			</div>
+			<hr>
+			<div class="">
+				<h3>2 – Blocage de signaux :</h3>
+				<p>
+					Dans un programme, il peut exister des régions critiques, c'est-à-dire des portions de code où
+					l'on ne veut pas être interrompu, notamment par un signal.
+				</p>
+				<p>
+					Il est alors possible, dans ce type de régions, de bloquer temporairement la délivrance d'un ou
+					plusieurs signaux.
+				</p>
+				<p>Un signal bloqué n'est pas ignoré, il est juste mis en attente.d</p>
+				<p>
+					On dit d'un signal envoyé mais bloqué qu'il est pendant (pending signal). Quand un signal
+					pendant est débloqué, il est délivré au processus.
+				</p>
+				<p>Evidemment, les signaux SIGKILL et SIGSTOP ne peuvent être bloqués.</p>
+				<p>
+					L'ensemble des signaux bloqués par un processus est appelé le masque de signaux. On gère le
+					masque de signaux avec la fonction sigprocmask.
+				</p>
+				<p>Nom de la fonction : <b>sigprocmask</b></p>
+				<u>Prototype :</u>
+				<p><code>int sigprocmask(int how, sigset_t *set, sigset_t *oldset);</code></p>
+				<u>Valeurs de retour :</u>
+				<p>
+					Si succès, retourne 0,<br>
+					-1 sinon.
+				</p>
+				<u>Fonctionnement :</u>
+				<p>
+					how : action à effectuer :<br>
+					- SIG_SETMASK : le nouveau masque est égal à l'ensemble <i>set.</i><br>
+					- SIG_BLOCK : le nouveau masque est égal à l'ancien augmenté des signaux se
+					trouvant dans l'ensemble <i>set.</i><br>
+					- SIG_UNBLOCK : le nouveau masque est égal à l'ancien moins les signaux se trouvant
+					dans l'ensemble <i>set.</i>
+				</p>
+				<p>
+					set : ensemble de signaux à bloquer/débloquer (selon la valeur de how).<br>
+					oldset : si différent de NULL, la fonction y sauve l'ancien masque.
+				</p>
+				<p>Si set est égal à NULL, alors la fonction ignore how, mais sauve le masque actuel dans oldset.</p>
+				<u>Exemple :</u>
+				<p><code>
+						void handler(int sig)<br>
+						{<br>
+						sigset_t debloque;<br>
+						printf("signal reçu : %d=%s\n",sig, sys_siglist[sig]);<br>
+						if (sig==SIGINT)<br>
+						{<br>
+						printf("On débloque CTRL+z !\n");<br>
+						sigemptyset(&debloque);<br>
+						sigaddset(&debloque,SIGTSTP);<br>
+						sigprocmask(SIG_UNBLOCK,&debloque,NULL);<br>
+						}<br>
+						}<br>
+						main()<br>
+						{<br>
+						sigset_t masque;<br>
+						sigemptyset(&masque);<br>
+						sigaddset(&masque,SIGTSTP);<br>
+						sigprocmask(SIG_SETMASK,&masque,NULL);// blocage de SIGTSTP (CTRL+z)<br>
+						signal(SIGINT,handler);<br>
+						printf("Mon PID : %d\n",getpid());<br>
+						printf("pour m'arreter : kill %d\n",getpid());<br>
+						printf("CTRL+z est bloqué, CTRL+c le débloque\n");<br>
+						while(1);<br>
+						}
+					</code></p>
+			</div>
+			<hr>
+			<div class="">
+				<h3>3 – La fonction sigaction :</h3>
+				<p>
+					La fonction signal vue précédemment est très basique, et peu fiable, mais reste très simple à
+					utiliser. Il existe néanmoins une fonction plus puissante pour gérer les signaux : sigaction.
+				</p>
+				<p>Nom de la fonction : <b>sigaction</b></p>
+				<u>Prototype :</u>
+				<p><code>int sigaction(int signo, struct sigaction *act, struct sigaction *oldact);</code></p>
+				<u>Valeurs de retour :</u>
+				<p>
+					Si succès, retourne 0,<br>
+					-1 sinon.
+				</p>
+				<u>Fonctionnement :</u>
+				<p>
+					signo : identifiant du signal que l'on veut gérer.<br>
+					act : variable de type struct sigaction :<br>
+					<code>
+						struct sigaction<br>
+						{<br>
+						void (*sa_handler)(int); // SIG_IGN, SIG_DFL ou fonction de gestion de signal<br>
+						sigset_t sa_mask; // masque de signaux à bloquer pendant l'exécution de la fonction de gestion de signal<br>
+						int sa_flags; // flags modifiant le comportement du processus vis-à-vis de certains signaux.<br>
+						}<br>
+					</code>
+					Le comportement du processus vis-à-vis du signal sera dicté par act.<br>
+					oldact : si non NULL, alors l'ancien comportement y sera sauvegardé.<br>
+				</p>
+				<u>Flags :</u>
+				<p>
+					Parmi les flags possibles, un est particulièrement intéressant : SA_NOCLDWAIT.<br>
+					En effet, en combinaison avec le signal SIGCHLD, il supprime la phase zombie chez les processus
+					fils qui se terminent entièrement tout de suite. Il n'est donc plus nécessaire de gérer les
+					processus zombies.
+				</p>
+				<u>Exemple :</u>
+				<p><code>
+						void ctrlc_ctrlz(int sig)<br>
+						{<br>
+						if (sig==SIGINT)<br>
+						printf(" CTRL+C!\n");<br>
+						else if (sig==SIGTSTP)<br>
+						printf(" CTRL+Z\n");<br>
+						}<br>
+						main()<br>
+						{<br>
+						struct sigaction action;<br>
+						action.sa_handler=ctrlc_ctrlz;<br>
+						sigaction(SIGINT,&action,NULL);<br>
+						sigaction(SIGTSTP,&action,NULL);<br>
+						printf("Mon PID : %d\n",getpid());<br>
+						printf("pour m'arreter : kill %d\n",getpid());<br>
+						printf("Appuyez sur CTRL+c et CTRL+c\n");<br>
+						while(1);<br>
+						}<br>
+					</code></p>
+			</div>
+		</section>
+		<section class="section1">
+			<h1>Réentrance</h1>
+			<div class="">
+				<p>
+					Quand un signal est reçu par un processus, et que celui-ci se détourne vers une fonction de
+					traitement de signal, on ne peut préjuger de la tâche qu'il exécute au moment de cette
+					interruption.<br>
+					Cela peut poser des problèmes dans certains cas et notamment rendre des données
+					inconsistantes.
+				</p>
+				<p>
+					Pour éviter cela, il faut éviter d'utiliser dans un handler des variables globales : elles pouvaient
+					être en train d'être modifiées lors du détournement du signal.<br>
+					De plus, il faudrait n'utiliser que des fonctions réentrantes dans les fonctions de gestion de signal.
+				</p>
+				<p>Une fonction réentrante est une fonction que l'on peut appeler plusieurs fois simultanément, sans
+					que ces appels interfèrent entre eux au niveau de la mémoire.</p>
+				<p>Si on appelle une fonction non-réentrante, alors son appel dans le handler peut modifier des
+					données qui étaient utilisées au moment du détournement du signal. On aura des données qui ne
+					seront plus cohérentes.</p>
+			</div>
+		</section>
+	</main>
+</body>
+
+</html>

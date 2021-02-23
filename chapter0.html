@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="fr" dir="ltr">
+
+<head>
+  <meta charset="utf-8">
+  <link rel="stylesheet" href="css/styles.css">
+  <title>TP de Programmation Système sous UNIX</title>
+  <link rel="shortcut icon" href="image/logo.ico">
+</head>
+
+<body>
+  <header>
+    <div class="nav">
+      <a class="link" href="chapter4.html">Chapitre 4</a>
+      <a class="link" href="chapter3.html">Chapitre 3</a>
+      <a class="link" href="chapter2.html">Chapitre 2</a>
+      <a class="link" href="chapter1.html">Chapitre 1</a>
+      <a class="select" href="chapter0.html"><b>Chapitre 0</b></a>
+      <a class="link" id="back" href="index.html"><b>Retour</b></a>
+    </div>
+  </header>
+
+  <main>
+    <section class="scroll">
+				<h3>Télécharger les TPs</h3>
+				<a href="documents/TP1.pdf" target="blank">TP 1</a><br>
+				<a href="documents/TP2.pdf" target="blank">TP 2</a><br>
+				<a href="documents/TP3.pdf" target="blank">TP 3</a><br>
+				<a href="documents/TP4.pdf" target="blank">TP 4</a><br>
+				<a href="documents/TP5.pdf" target="blank">TP 5</a>
+		</section>
+    <h1 class="title">Chapitre 0</h1>
+    <section class="section1">
+      <h1>Linux</h1>
+      <div class="div_2elem">
+        <p>
+          Le système GNU/Linux est organisé sous forme de couches concentriques, où chacun accède
+          selon l'usage qu'il fait du système :<br><br>
+          Chacune de ces couches peut être utilisée sans connaître les couches qui lui sont inférieures.
+          On le voit, la programmation système consiste à s'adresser directement au noyau.</p>
+      </div>
+      <aside id="chap0_img0" class="aside_right">
+        <img src="image/chap0_img0.jpg" alt="">
+      </aside>
+    </section>
+    <section class="section3">
+      <h1>Le noyau Linux</h1>
+      <p>
+        Il est important de savoir comment est organisé le noyau, même sommairement, pour pouvoir
+        programmer au plus près. Le noyau peut être scindé en 2 grandes parties distinctes, le système de gestion des processus
+        (tâches de la machine) et le système de gestion des fichiers (dans Linux, "tout est fichier").<br><br>
+      </p>
+      <aside class="aside_left">
+        <img src="image/chap0_img1.jpg" alt="">
+      </aside>
+
+      <p>On le voit sur ce schéma, les 2 sous-systèmes du noyau communiquent avec le niveau utilisateur
+        via les appels-système.<br><br><br>
+        Un appel-système est une fonction de bas niveau permettant de communiquer depuis l'espace
+        utilisateur avec le noyau.<br><br><br>
+        La programmation consiste à utiliser des appels-système pour accéder au système de gestion des
+        processus et au système de gestion de fichiers.
+      </p>
+    </section>
+  </main>
+</body>
+
+</html>

@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="fr" dir="ltr">
+
+<head>
+	<meta charset="utf-8">
+	<link rel="stylesheet" href="css/styles.css">
+	<title>TP de Programmation Système sous UNIX</title>
+	<link rel="shortcut icon" href="image/logo.ico">
+</head>
+
+<body>
+	<header>
+		<div class="nav">
+			<a class="link" href="chapter4.html">Chapitre 4</a>
+			<a class="select" href="chapter3.html"><b>Chapitre 3</b></a>
+			<a class="link" href="chapter2.html">Chapitre 2</a>
+			<a class="link" href="chapter1.html">Chapitre 1</a>
+			<a class="link" href="chapter0.html">Chapitre 0</a>
+			<a class="link" id="back" href="index.html"><b>Retour</b></a>
+		</div>
+	</header>
+
+	<main>
+		<section class="scroll">
+			<h3>Télécharger les TPs</h3>
+			<a href="documents/TP1.pdf" target="blank">TP 1</a><br>
+			<a href="documents/TP2.pdf" target="blank">TP 2</a><br>
+			<a href="documents/TP3.pdf" target="blank">TP 3</a><br>
+			<a href="documents/TP4.pdf" target="blank">TP 4</a><br>
+			<a href="documents/TP5.pdf" target="blank">TP 5</a>
+		</section>
+		<h1 class="title">Chapitre 3</h1>
+		<section class="section1">
+			<h1>Definition</h1>
+			<div class="">
+				<p>Un processus, c'est l'image mémoire d'un programme en cours d'exécution. Il se compose à la
+					fois de code et de données.<br>
+					Linux étant un système multi-processus, le noyau est chargé, via un processus spécial,
+					l'ordonnanceur (ou scheduler) de gérer l'attribution de la ressource "processeur" aux différents
+					processus en cours.<br>
+					On peut afficher la liste des processus en cours d'exécution, avec toutes leurs caractéristiques
+					avec la commande :
+					ps –aux<br><br>
+					A un instant donné, un processus peut se trouver dans un des quatre états suivants (voir 8ième
+					colonne de ps –aux) :</p>
+				<ul>
+					<li>Running : il est en cours d'exécution.</li>
+					<li>Sleep : il est endormi en attente d'un appel-système.</li>
+					<li>sTopped : il a été suspendu par un signal (avec CTRL+Z par exemple).</li>
+					<li>Zombie : il est mort mais pas tout à fait (voir plus loin dans ce chapitre).</li>
+				</ul>
+				<p>
+					L'ordonnanceur fonctionne selon un algorithme qui décidera à quel moment un processus dans
+					l'état S passera dans l'état R. Il existe de nombreux algorithmes d'ordonnancement (à priorités,
+					Round-Robin, etc…).<br><br>
+					Un processus issu d'un exécutable compilé à partir d'un programme en C a la structure suivante
+					sur une machine x86 :
+				</p>
+			</div>
+			<div class="div_2elem">
+				<p>
+					- Text : zone où est stocké le code du programme en langage machine.<br>
+					- Données initialisées : c'est là que sont stockées les données qui sont initialisées lors de
+					leur déclaration (exemple:<code> int i=2;</code>).<br>
+					- Données non initialisées (ou BSS) : c'est là que sont stockées les données qui ne sont pas
+					initialisées lors de leur déclaration (exemple:<code> char c;</code>).<br>
+					- Pile : zone où seront stockées les adresses de retour lors des appels de fonctions et les
+					variables locales des fonctions.<br>
+					- Tas : zone où se feront les allocations de mémoire dynamique (malloc, calloc, realloc…).
+				</p>
+			</div>
+			<aside class="aside_right">
+				<img src="image/img1.png" alt="image">
+			</aside>
+		</section>
+		<section class="section4">
+			<h1>Identifiant de processus</h1>
+			<div class="">
+				<p>Tout processus est identifié par le système grâce à une valeur non-négative, le Process Identifier,
+					ou PID. Cette valeur est garantie unique le temps de vie de processus.
+					Quand un processus se termine, son PID est libéré et peut-être attribué à un nouveau processus.
+					Généralement, l'algorithme d'attribution de PID fait en sorte de ne redonner les PIDs déjà utilisés
+					après un certain délai.<br><br>
+					Il existe des processus spéciaux ayant des PIDs bien définis :<br>
+					- L'ordonnanceur (ou swapper) a le PID n°0.
+					- Le processus init, responsable du chargement du système, a le PID n°1.<br><br>
+					Pour obtenir le PID d'un processus, il existe deux fonctions :
+					• Nom de la fonction : <b>getpid</b><br><br>
+					<u>Prototype :</u><br><br>
+					pid_t getpid(void);<br><br>
+					<u>Valeur de retour :</u><br><br>
+					Si succès, retourne le PID du processus appelant.<br><br>
+					• Nom de la fonction : <b>getppid</b> (Get Parent PID)<br><br>
+					<u>Prototype :</u><br><br>
+					pid_t getppid(void)<br><br>
+					<u>Valeur de retour :</u><br><br>
+					Si succès, retourne le PID du processus père (=celui qui l'a créé) du processus appelant. </p>
+			</div>
+		</section>
+		<section class="section2">
+			<h1>Création de processus</h1>
+			<div class="div_2elem separator_neg">
+				<p><u>1 – Appel-système de création de processus :</u></p>
+				<p>
+					Un processus peut en créer un autre avec la fonction fork. Le processus créé s'appelle processus
+					fils (child process) et le processus qui l'a créé s'appelle processus père (parent process).<br><br>
+					Nom de la fonction : fork<br><br>
+					<u>Prototype :</u><br><br>
+					pid_t fork(void);<br><br>
+					<u>Valeurs de retour :</u><br><br>
+					En cas de succès, fork retourne deux valeurs :
+					- le PID du processus fils dans le processus père.
+					- La valeur 0 dans le processus fils.
+					En cas d'échec, le processus fils n'est pas créé et fork retourne -1 dans le processus père.
+					<u>Fonctionnement :</u><br><br>
+					Après le fork, le processus fils est une copie du processus père. Seul le PID diffère. Les variables
+					sont dupliquées, et pas partagées.<br>
+					Les deux processus reprennent leur exécution à la ligne suivant le fork().<br>
+					On ne peut prévoir quel sera le processus à reprendre son exécution le premier après la création
+					du fils : ce sera l'algorithme d'ordonnancement qui le choisira selon ses propres critères. Il ne
+					faut donc jamais écrire un programme en se basant sur l'hypothèse que c'est un processus précis
+					qui démarrera en premier.<br><br><br><br><br>
+			</div>
+			<div class="aside_right">
+				<u>Exemple :</u><br>
+				main()<br>
+				{<br>
+				pid_t n;<br>
+				int i=5;<br>
+				printf("Bonjour\n");<br>
+				n=fork();<br>
+				printf("Je suis le processus n°%d, i=%d\n",getpid(),i); // père // fils<br>
+				if (n==0)<br>
+				{<br>
+				printf("Je suis le fils : pid=%d, mon père est %d\n",getpid(), getppid());<br>
+				i=10;<br>
+				printf("fils : pour moi, i=%d\n",i);<br>
+				}<br>
+				else if (n>0)<br>
+				{<br>
+				printf("Je suis le père : pid=%d, mon fils est %d\n",getpid(), n);<br>
+				printf("père : pour moi, i=%d\n",i);<br>
+				}<br>
+				else {<br>
+				printf("Erreur fork\n");<br>
+				exit(-1);<br>
+				}<br>
+				printf("Au revoir, j'étais le processus de pid=%d\n",getpid());<br>
+				}<br>
+				Bleu : exécuté par le père<br>
+				Rouge : exécuté par le fils.<br>
+				Noir : exécuté par les deux<br>
+				</p>
+			</div>
+			<hr>
+			<div class="">
+				<p><u>Exécution du programme :</u><br>
+					Bonjour<br>
+					Je suis le processus n°3417, i=5<br>
+					Je suis le processus n°3416, i=5<br>
+					Je suis le père : pid=3416, mon fils est 3417<br>
+					Je suis le fils : pid=3417, mon père est 3416<br>
+					fils : pour moi, i=10<br>
+					père : pour moi, i=5<br>
+					Au revoir, j'étais le processus de pid=3416<br>
+					Au revoir, j'étais le processus de pid=3417<br><br>
+					En bleu, les lignes affichées par le père.<br>
+					En rouge, les lignes affichées par le fils.<br><br>
+					Ce résultat n'est qu'une possibilité parmi plusieurs. Les lignes bleues seront toujours dans cet
+					ordre-là les unes par rapport aux autres, de même pour les lignes rouges. Par contre, l'ordre des
+					bleues par rapport aux rouges peut varier. Seule la première ligne bleue sera toujours à cet
+					emplacement, car elle est exécutée avant le fork.<br><br></p>
+				<div class="div_2elem separator_neg">
+					<p><u>2 - Performances du fork :</u><br><br>
+						La création de processus est un procédé relativement long. Des méthodes pour l'accélérer ont
+						donc été mises en place.<br>
+						Tout d'abord, la section TEXT étant en lecture seule, les deux processus n'ont pas besoin de la
+						dupliquer, il suffit qu'ils partagent la même, celle du père.<br>
+						Puis, le procédé Copy-On-Write a été mis en place : les autres sections du processus père (voir I
+						de ce chapitre) seront partagées entre les deux processus. Chaque section ne sera dupliquée que
+						si un des deux processus la modifie : chacun disposera alors de sa propre copie.<br><br><br><br></p>
+				</div>
+				<div class="aside_right">
+					<p><u>3 - Fichiers ouverts :</u><br><br>
+						Les descripteurs des fichiers ouverts par un processus sont dupliqués dans son fils, comme avec
+						un dup2.<br>
+						De plus, les deux processus partagent la même tête de lecture/écriture sur le fichier. Si le fils lit
+						(ou écrit) dans le fichier, la tête de lecture/écriture sera aussi décalée dans père, et vice-versa.<br><br>
+						Néanmoins, il est rare que les 2 processus utilisent les mêmes descripteurs en même temps :<br>
+						- Soit le père attend que le fils ait terminé avec le(s) fichier(s) grâce aux fonctions de
+						synchronisation : pas d'interférences entre les deux.<br>
+						- Soit ils utilisent chacun certains fichiers et pas d'autres : ils ferment alors les
+						descripteurs qu'ils n'utilisent pas (voir cours de réseau sur les serveurs concurrents). </p>
+				</div>
+				<hr>
+				<div class="div_2elem separator_neg">
+					<p><u>4 - Héritage :</u><br><br>
+						Après un fork, le processus fils hérite de plusieurs choses du père :<br>
+						- le terminal de contrôle<br>
+						- le répertoire courant<br>
+						- le masque de droits<br>
+						- le masque de signaux<br>
+						- l'environnement<br><br>
+						Les différences entre les deux sont :<br>
+						- leur PID<br>
+						- le PID de leur père<br>
+						- l'ensemble des signaux pendants est remis à 0 pour le fils<br>
+						- l'alarme est réinitialisée pour le fils<br><br></p>
+				</div>
+				<div class="aside_right">
+					<p><u>5 – Boucles et fork :</u><br>
+						Il faut manipuler la fonction fork avec précaution dans une boucle car on peut créer un très
+						grand nombre de processus sans forcément le vouloir.<br><br>
+				</div>
+				<hr>
+				<div class="div_2elem">
+					<p><u>Exemple :</u><br><br>
+						for(i=0;i < 3;i++) n=fork();<br><br>
+							Ce programme ne va pas créer 3 processus comme on pourrait s'y attendre, mais 23
+							, soit 8
+							processus.<br>
+							En effet, à chaque création de processus, le nouveau processus va reprendre son exécution juste
+							après le fork, soit dans la boucle. On aura donc (soit P1 le processus initial) :<br>
+							- i=0 : création par P1 du processus P2.<br>
+							- i=1 : création par P1 du processus P3 et par P2 du processus P4.<br>
+							- i=2 : création par P1 du processus P5, par P2 du processus P6, par P3 du processus
+							P7 et par P4 du processus P8.<br><br>
+				</div>
+				<div class="aside_right">
+					<p>On a le schéma de parenté suivant :</p>
+					<img src="image/img2.png" alt="image2">
+					<p>Cela peut donc aller très vite : avec la même boucle, mais de 0 à 9 au lieu de 0 à 3, on créerait 2
+						10, soit 1024, processus. </p>
+				</div>
+
+			</div>
+		</section>
+		<section class="section1">
+			<h1>Synchronisation de processus</h1>
+			<div class="">
+				<p>Il est possible de synchroniser un processus père avec ses processus fils. De plus, un processus
+					fils peut retourner une valeur à son père lorsqu'il se termine.<br><br>
+					<u>1 – Fin de processus :</u><br><br>
+					Il y a plusieurs façons de se terminer pour un processus :<br>
+					- à la fin de la fonction main.<br>
+					- en appelant la fonction exit.<br>
+					- à la réception d'un signal.<br><br>
+					Ce dernier cas est une fin non normale, provoquée par une erreur. Les deux premiers sont des
+					fins dites normales.<br><br>
+					Nous allons étudier le deuxième cas.
+					<br><br>Nom de la fonction : exit<br><br>
+					<u>Prototype :</u><br><br>
+					void exit(int status);<br><br>
+					<u>Valeur de retour :</u><br><br>
+					Comme le prototype le montre, exit ne retourne pas de valeur.<br><br>
+					<u>Fonctionnement :</u><br><br>
+					status : valeur qui sera retournée au processus père (cf IV,2 de ce chapitre).<br><br>
+					exit provoque une fin "propre" du processus : tous les buffers de fichiers seront vidés et les
+					descripteurs seront fermés.<br><br>
+					<u>2 – Attente de processus :</u><br><br>
+					Il est possible, pour un processus, de se mettre en attente passive de la fin d'un ou de plusieurs
+					fils. On peut ainsi synchroniser ces processus.<br><br>
+					Nom de la fonction : wait<br><br>
+					<u>Prototype :</u><br><br>
+					pid_t wait(int *val);<br><br>
+					<u>Valeurs de retour :</u><br><br>
+					Si succès, wait peut retourner deux valeurs : le PID du processus fils qui s'est terminé ou 0 s'il
+					n'y a plus aucun fils du processus appelant en cours d'exécution,<br>
+					-1 sinon. </p>
+			</div>
+			<div class="">
+				<p><u>Fonctionnement</u><br>
+					<br>
+
+					wait met le processus en attente de la fin d'un de ses fils (n'importe lequel) :<br>
+
+					- Si un des processus fils est déjà terminé et que wait n'a pas encore été appelé pour
+					lui, alors le processus père n'est pas bloqué et le père récupère dans val le code
+					d'erreur et le code de retour du processus fils qui s'est arrêté. wait retourne le PID de
+					ce fils<br>
+					<br>
+
+					- Si tous les fils du processus appelant sont en cours d'exécution, alors le processus
+					père se bloque jusqu'à ce qu'un de ses fils se termine. Quand c'est le cas, le père est
+					débloqué et récupère dans val le code d'erreur et le code de retour du processus fils
+					qui s'est arrêté. wait retourne le PID de ce fils.<br>
+					<br>
+
+					- Si plus aucun fils n'est en cours d'exécution et que tous les fils qui se sont terminés
+					ont déjà été traités par wait, alors wait retourne 0.<br>
+					<br>
+
+					On vient de voir que le père récupère dans l'argument de wait deux valeurs : le code d'erreur et
+					le code de retour. Le code d'erreur est généré par le système selon la façon dont s'est terminé le
+					processus fils. Le code de retour correspond à la valeur que l'on a passée à la fonction exit lors
+					de la fin du processus fils.<br>
+					<br>
+
+					Pour exploiter et récupérer ces deux valeurs, on doit utiliser des macros prédéfinies par le
+					système (soit status la valeur récupérée par wait) :<br>
+					<br>
+
+					- WIFEXITED(status) : vrai si le processus fils s'est terminé normalement.
+					o On utilise alors la macro WEXITSTATUS(status) qui retournera le code de
+					retour passé par exit.<br>
+
+					- WIFSIGNALED(status) : vrai si le processus fils s'est terminé à cause d'un signal.
+					o On utilise alors la macro WTERMSIG(status) qui retourne le numéro du signal
+					responsable. </p>
+				<p><u>Exemple :</u><br><br>
+					main()<br>
+					{<br>
+					pid_t n,fils;<br>
+					int val,status;<br><br>
+					n=fork();<br>
+					if (n==0)<br>
+					{<br>
+					printf("Je suis le fils de pid=%d\n",getpid());<br>
+					printf("Entrez une valeur numérique :");<br>
+					scanf("%d",&val);<br>
+					exit(val);<br>
+					}<br>
+					else<br>
+					if (n>0)<br>
+					{<br>
+					printf("Attente de la fin du fils...\n");<br>
+					fils=wait(&status);<br>
+					printf("Fin de mon fils n°%d\n",fils);<br>
+					if (WIFEXITED(status))<br>
+					{<br>
+					printf("Terminaison du fils normale\n");<br>
+					printf("Code de retour : %d\n",WEXITSTATUS(status));<br>
+					}<br>
+					else<br>
+					if (WIFSIGNALED(status))<br>
+					{<br>
+					printf("Terminaison du fils à cause d'un signal\n");<br>
+					printf("Signal responsable : %d\n",WTERMSIG(status));<br>
+					}<br>
+					}<br>
+					} </p>
+
+				<p>Un processus père peut attendre tous ses fils grâce à la valeur de retour de wait qui sera 0 si
+					plus aucun fils n'est présent en mémoire.<br><br>
+					<u>Exemple :</u><br><br>
+					int fonction_fils(int num)<br>
+					{<br>
+					int temps;<br><br>
+					srand(time(NULL)+getpid()); // pour initialiser les nombres aléatoires<br>
+					temps=rand()%15; // temps au hasard entre 0 et 15 secondes<br><br>
+					printf("Fils n°, pid=%d, mon attente : %d s\n",num,getpid(),temps);<br><br>
+					sleep(temps);<br>
+					exit(temps);<br>
+					}<br><br>
+					main()<br>
+					{<br>
+					pid_t n=1,fils;<br>
+					int i,status;<br><br>
+					for (i=0;i < 10;i++)<br>
+						{<br>
+						n=fork();<br>
+						if (n==0) fonction_fils(i);<br>
+						}<br><br>
+						while ((fils=wait(&status))>0)<br>
+						printf("Fin du fils %d après %d secondes\n",fils,WEXITSTATUS(status));<br><br>
+						}<br>
+						<u>3 – Processus zombies :</u><br><br>
+						Quand un processus se termine, il ne disparaît pas tout de suite du système. En effet, il reste en
+						mémoire le temps de pouvoir passer à son processus père ses codes d'erreur et de retour, entre
+						autres.<br>
+						Pour cela, il passe en un état intermédiaire, appelé état zombie. Il restera dans cet état (noté
+						à côté du nom du processus lors d'un ps –aux, le champ STAT étant à la valeur Z)
+						jusqu'à ce que le processus père appelle une fonction d'attente pour récupérer les codes d'erreur
+						et de retour.<br><br>
+						Si le processus père se termine avant ses fils, ceux-ci sont "recueillis" par le processus init de PID
+						égal à 1. Or, le processus init a été écrit de manière à appeler la fonction wait à chaque fois
+						qu'un de ses fils se termine. Ainsi, init empêche le système d'être submergé par les zombies.<br><br>
+						Par contre, il faudra gérer les zombies générés par un processus père qui ne s'arrête jamais (par
+						exemple, un serveur concurrent).</p>
+			</div>
+		</section>
+		<section class="section3">
+			<h1>Changement d'exécutable</h1>
+			<div class="">
+				<p>On l'a vu, quand on crée un processus avec fork, le processus fils exécute le même segment de
+					code que son père. Si les deux processus exécutent des tâches différentes et complexes, cela
+					impose d'écrire dans le même programme les deux codes, ce qui est compliqué et peu pratique.<br><br>
+					Pour remédier à cela, il est possible, dans un processus, de charger un nouvel exécutable à partir
+					du disque : les zones TEXT, données, la pile et le tas seront remplacés par celles prises dans
+					l'exécutable. Le processus sera le même, mais il exécutera un tout nouveau programme.<br><br>
+					On utilise pour cela un ensemble de commandes dites commandes exec qui diffèrent par la façon
+					dont on passe au nouvel exécutable les paramètres d'exécution.</p>
+			</div>
+			<div class="div_2elem separator_neg">
+				<p><u>1 – Paramètres en liste :</u><br><br>
+					• <u>Nom de la fonction : <b>execl</b></u><br><br>
+					<u>Prototype :</u><br><br>
+					int execl(char *pathname,char *arg0, char *arg1,…,char *argn,NULL);<br><br>
+					<u>Valeurs de retour :</u><br><br>
+					Si succès, pas de retour : le programme est écrasé par l'exécutable chargé,
+					-1 sinon.<br><br>
+					<u>Fonctionnement :</u><br><br>
+					pathname : nom et chemin de l'exécutable à charger.
+					arg0,…,argn : arguments à passer à l'exécutable.<br><br>
+					La liste des arguments se termine par la valeur NULL.
+			</div>
+			<div class="aside_right">
+				<p><u>Exemple :</u><br><br>
+					pid_t n;<br><br>
+					n=fork();<br>
+					if (n==0)<br>
+					execl("/bin/ls","ls","-al","/etc",NULL);<br><br>
+					Le processus fils va charger l'exécutable /bin/ls et va lui passer :<br>
+					- l'argument 0 : le nom de la commande : "ls".<br>
+					- l'argument 1 : l'option "-al".<br>
+					- l'argument 2 : le paramètre "/etc". <br></p>
+			</div>
+			<hr>
+			<div class="div_2elem separator_neg">
+				<p>• <u>Nom de la fonction : <b>execlp</b></u><br><br>
+					<u>Prototype :</u><br><br>
+					int execlp(char *filename,char *arg0, char *arg1,…,char *argn,NULL);<br><br>
+					<u>Valeurs de retour :</u><br><br>
+					Si succès, pas de retour : le programme est écrasé par l'exécutable chargé,
+					-1 sinon.<br><br>
+					<u>Fonctionnement :</u><br><br>
+					filename : nom de l'exécutable à charger.<br>
+					arg0,…,argn : arguments à passer à l'exécutable.<br><br>
+					La liste des arguments se termine par la valeur NULL.<br><br>
+					Le p de execlp signifie path : si filename ne contient pas de /, l'exécutable sera recherché dans
+					les chemins définis par la variable d'environnement PATH. On utilise notamment cette commande
+					pour lancer des commandes du shell.</p>
+			</div>
+			<div class="aside_right">
+				<p><u>Exemple :</u><br><br>
+					pid_t n;<br><br>
+					n=fork();<br>
+					if (n==0)<br>
+					execlp("ls","ls","-al","/etc",NULL);<br><br>
+					Le processus fils va charger l'exécutable "ls" qu'il ira chercher dans les chemins de PATH
+					(généralement, /bin, le répertoire où se trouve l'exécutable ls est dans PATH) et va lui passer :<br>
+					- l'argument 0 : le nom de la commande : "ls".<br>
+					- l'argument 1 : l'option "-al".<br>
+					- l'argument 2 : le paramètre "/etc".</p>
+			</div>
+			<hr>
+			<div class="">
+				• <U>Nom de la fonction : <b>execle</b></u><br><br>
+				<u>Prototype :</u><br><br>
+				int execle(char *pathname,char *arg0, char *arg1,…,char *argn,NULL,char *envp[]);<br><br>
+				<u>Valeurs de retour :</u><br><br>
+				Si succès, pas de retour : le programme est écrasé par l'exécutable chargé,
+				-1 sinon.<br><br>
+				<u>Fonctionnement :</u><br><br>
+				pathname : nom et chemin de l'exécutable à charger.<br>
+				arg0,…,argn : arguments à passer à l'exécutable.<br>
+				envp : tableau contenant des variables d'environnement de la forme "NOMVARIABLE=valeur"<br>
+				permettant de modifier l'environnement du nouvel exécutable.<br><br>
+				La liste des arguments se termine par la valeur NULL. </p>
+			</div>
+			<div class="div_2elem separator_neg">
+				<p><u>2 – Paramètres en tableau :</u><br><br>
+					• <u>Nom de la fonction : <b>execv</b></u><br><br>
+					<u>Prototype :</u><br><br>
+					int execv(char *pathname,char *arg[]);<br><br>
+					<u>Valeurs de retour :</u><br><br>
+					Si succès, pas de retour : le programme est écrasé par l'exécutable chargé,
+					-1 sinon.<br><br>
+					<u>Fonctionnement :</u><br><br>
+					pathname : nom et chemin de l'exécutable à charger.
+					argv : tableau contenant les arguments à passer à l'exécutable.<br><br>
+					La case suivant le dernier argument contient la valeur NULL.</p>
+			</div>
+			<div class="aside_right">
+				<p><u>Exemple :</u><br><br>
+					pid_t n;<br>
+					char *argv[]={"ls","-al","/etc",NULL};<br>
+					n=fork();<br>
+					if (n==0)<br>
+					execv("/bin/ls",argv);<br><br>
+					Le processus fils va charger l'exécutable /bin/ls et va lui passer :<br>
+					- l'argument 0 : le nom de la commande : "ls".<br>
+					- l'argument 1 : l'option "-al".<br>
+					- l'argument 2 : le paramètre "/etc". </p>
+			</div>
+			<hr>
+			<div class="div_2elem separator_neg">
+				<p>• <u>Nom de la fonction : <b>execvp</b></u><br><br>
+					<u>Prototype :</u><br><br>
+					int execvp(char *filename,char *arg[]);<br><br>
+					<u>Valeurs de retour :</u><br><br>
+					Si succès, pas de retour : le programme est écrasé par l'exécutable chargé,<br>
+					-1 sinon.<br><br>
+					<u>Fonctionnement :</u><br><br>
+					filename : nom de l'exécutable à charger.<br>
+					argv : tableau contenant les arguments à passer à l'exécutable.<br><br>
+					La case suivant le dernier argument contient la valeur NULL.</p>
+			</div>
+			<div class="aside_right">
+				<p><u>Exemple :</u><br><br>
+					pid_t n;<br>
+					char *argv[]={"ls","-al","/etc",NULL};<br>
+					n=fork();<br>
+					if (n==0)<br>
+					execvp("ls",argv);<br><br>
+					Le processus fils va charger l'exécutable /bin/ls et va lui passer :<br>
+					- l'argument 0 : le nom de la commande : "ls".<br>
+					- l'argument 1 : l'option "-al".<br>
+					- l'argument 2 : le paramètre "/etc".<br><br>
+					Le p de execvp signifie path : si filename ne contient pas de /, l'exécutable sera recherché dans
+					les chemins définis par la variable d'environnement PATH. On utilise notamment cette commande
+					pour lancer des commandes du shell.</p>
+			</div>
+			<hr>
+			<div class="">
+				• <u>Nom de la fonction : <b>execve</b></u><br><br>
+				<u>Prototype :</u><br><br>
+				int execve(char *pathname,char *arg[],char *envp[]);<br><br>
+				<u>Valeurs de retour :</u><br><br>
+				Si succès, pas de retour : le programme est écrasé par l'exécutable chargé,<br>
+				-1 sinon.<br><br>
+				<u>Fonctionnement :</u><br><br>
+				pathname : nom et chemin de l'exécutable à charger.<br>
+				argv : tableau contenant les arguments à passer à l'exécutable.<br>
+				envp : tableau contenant des variables d'environnement de la forme "NOMVARIABLE=valeur"<br>
+				permettant de modifier l'environnement du nouvel exécutable. </p>
+			</div>
+		</section>
+		<section class="section1">
+			<h1>Exemple concret : le shell</h1>
+			<div class="">
+				<p>Lorsqu'on exécute une commande dans un shell, toutes les primitives systèmes vues dans ce
+					chapitre sont appelées dans un ordre précis.<br><br>
+					<u>1 – Commande en avant-plan :</u><br><br>
+					Par exemple, on lance la commande pwd dans un shell :<br><br>
+					user1@debian7:~/rep2$pwd<br>
+					/home/user1/rep2<br><br>
+					On aura alors les primitives suivantes qui seront appelées dans cet ordre : </p>
+				<img src="image/img3.png" alt="img3">
+				<p>A l'appui de la touche Entrée, le shell va créer un processus fils avec <b>fork()</b>. Le shell père va
+					alors se mettre en attente avec <b>wait()</b>.<br>
+					Pendant ce temps, le shell fils va charger avec <b>exec()</b> l'exécutable de la commande pwd. A la fin
+					de l'exécution de pwd, le processus va appeler <b>exit()</b>.<br>
+					Le shell père va alors récupérer la main et attendre l'entrée d'une nouvelle commande.<br><br>
+					<u>2 – Commande en arrière-plan :</u><br><br>
+					On lance la commande pwd en arrière-plan avec & :<br><br>
+					user1@debian7:~/rep2$pwd & <br>
+					/home/user1/rep2<br><br>
+					On aura alors les primitives suivantes qui seront appelées dans cet ordre :
+				</p>
+				<img src="image/img4.png" alt="image4">
+				<p>La seule différence avec le cas précédent, c'est que le shell père n'appelle pas la primitive wait()
+					et qu'il rend tout de suite la main. </p>
+			</div>
+		</section>
+	</main>
+</body>
+
+</html>

@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="fr" dir="ltr">
+
+<head>
+  <meta charset="utf-8">
+  <link rel="stylesheet" href="css/styles.css">
+  <title>TP de Programmation Système sous UNIX</title>
+  <link rel="shortcut icon" href="image/logo.ico">
+</head>
+
+<body>
+  <header>
+    <div class="nav">
+      <a class="link" href="chapter4.html">Chapitre 4</a>
+      <a class="link" href="chapter3.html">Chapitre 3</a>
+      <a class="link" href="chapter2.html">Chapitre 2</a>
+      <a class="select" href="chapter1.html"><b>Chapitre 1</b></a>
+      <a class="link" href="chapter0.html">Chapitre 0</a>
+      <a class="link" id="back" href="index.html"><b>Retour</b></a>
+    </div>
+  </header>
+
+  <main>
+    <section class="scroll">
+      <h3>Télécharger les TPs</h3>
+      <a href="documents/TP1.pdf" target="blank">TP 1</a><br>
+      <a href="documents/TP2.pdf" target="blank">TP 2</a><br>
+      <a href="documents/TP3.pdf" target="blank">TP 3</a><br>
+      <a href="documents/TP4.pdf" target="blank">TP 4</a><br>
+      <a href="documents/TP5.pdf" target="blank">TP 5</a>
+    </section>
+    <h1 class="title">Chapitre 1</h1>
+    <section class="section1">
+      <h1>Introduction</h1>
+      <div class="div_1elem">
+        <p>
+          Nous allons voir dans ce chapitre les appels-système relatifs à la gestion des entrées/sorties sous
+          Linux. Ce sont des fonctions de bas niveau, relativement rudimentaires, permettant d'accéder
+          notamment aux disques, mais qui permettent aussi d'accéder à toutes sortes de périphériques (le
+          réseau entre autres).
+        </p>
+      </div>
+    </section>
+    <section class="section4">
+      <h1>Descripteurs de fichiers</h1>
+
+      <div class="div_2elem separator_neg">
+        <p class="">Tout fichier ouvert est référencé par le noyau grâce à un descripteur de fichier.
+          Un descripteur de fichier est un entier non-négatif qu'on déclarera en int.
+
+          Lorsqu'on ouvre un fichier existant ou qu'on en crée un nouveau, le noyau alloue une place dans
+          la table des fichiers ouverts du processus appelant et lui retourne l'indice de cette entrée, le
+          descripteur du fichier ouvert.
+          C'est via son descripteur qu'on pourra accéder à un fichier.
+          Par convention, sous Linux, tout processus, lorsqu'il démarre, ouvre trois canaux de
+          communication, l'entrée standard (lecture), la sortie standard (écriture) et la sortie d'erreur
+          standard (écriture).
+        </p>
+      </div>
+      <aside class="aside_right">
+        <p>Le système leur attribue les descripteurs suivants : </p>
+        <ul>
+          <li>0 pour l'entrée standard.</li>
+          <li>1 pour la sortie standard.</li>
+          <li>2 pour la sortie d'erreur standard. </li>
+        </ul>
+        <p>Pour des raisons de lisibilité du code et de <br> portabilité, il vaut mieux utiliser dans les programmes <br>
+          leurs alias standardisés :</p>
+        <ul>
+          <li>STDIN_FILENO pour le descripteur n°0.</li>
+          <li>STDOUT_FILENO pour le descripteur n°1.</li>
+          <li>STERR_FILENO pour le descripteur n°2.</li>
+        </ul>
+      </aside>
+
+    </section>
+    <section class="section2">
+      <h1>Ouverture d'un fichier</h1>
+      <div class="div_2elem separator_neg">
+        <p>Nom de la fonction : open <br>
+          Prototypes : </p>
+        <ol>
+          <li>int open(char *pathfile, int openflag);</li>
+          <li>int open(char *pathfile, int openflag, int mode);</li>
+        </ol>
+        <p>Valeurs de retour : <br><br>
+          Retourne un descripteur de fichier si tout s'est bien passé -1 sinon.</p>
+        <p>Fonctionnement :<br>
+          Syntaxe 1 : int open(char *pathfile, int openflag);<br>
+          Pour ouvrir des fichiers existants</p>
+        <p>pathfile : nom (et chemin éventuel) du fichier à ouvrir.<br>
+          openflag : options d'ouverture. Contient obligatoirement un des flags suivants :</p>
+        <ul>
+          <li>O_RDONLY : ouverture en lecture seule.</li>
+          <li>O_WRONLY : ouverture en écriture seule.</li>
+          <li>O_RDWR : ouverture en lecture et écriture.</li>
+        </ul>
+        <p>On peut ajouter d'autres options avec des OU logiques (|) :</p>
+        <ul>
+          <li>O_APPEND : mode ajout, chaque écriture se fera en fin de fichier.</li>
+        </ul>
+      </div>
+      <aside class="aside_right">
+        <p>Syntaxe 2 : int open(char *pathfile, int openflag, int mode);<br>
+          Pour créer un nouveau fichier et l'ouvrir<br>
+          pathfile : nom (et chemin éventuel) du fichier à ouvrir. <br>
+          openflag : options d'ouverture. Contient obligatoirement un des flags suivants : </p>
+        <ul>
+          <li>O_RDONLY : ouverture en lecture seule.</li>
+          <li>O_WRONLY : ouverture en écriture seule.</li>
+          <li>O_RDWR : ouverture en lecture et écriture.</li>
+        </ul>
+        <p>Il faut ajouter le flag O_CREAT (avec un OU logique |)pour permettre la création du fichier <br>
+          (sinon, il y aura une erreur et le fichier ne sera pas créé)<br>
+          mode : permet de préciser les droits du nouveau fichier. Les droits seront égaux à mode-umask.<br><br>
+          Exemples :</p>
+        <ul>
+          <li>int fd;
+            fd=open("/home/esgi/bdd",O_RDONLY); // ouvre le fichier /home/esgi/bdd en lecture seule
+            if (fd<0) printf("Erreur d'ouverture\n");</li> <br>
+          <li>int filedesc;
+            filedesc=open("liste_eleves",O_RDWR | O_CREAT | O_APPEND,0666); // ouvre le fichier
+            liste_eleves du répertoire courant en lecture-écriture et le crée s'il n'existe pas avec les droits 666-umask
+            (avec un umask de 0022 par défaut, les droits seront 0644 : rw-r--r--) ></li>
+        </ul>
+      </aside>
+    </section>
+    <section class="section1">
+      <h1>Lecture et écriture dans un fichier</h1>
+      <p>Les appels-système que nous allons voir seront appliqués à la lecture et l'écriture dans un fichier
+        sur le disque, mais peuvent aussi servir pour lire et écrire sur n'importe quel descripteur.
+        Pour chaque fichier ouvert, le système gère une tête de lecture/écriture (une valeur entière en
+        octets qui commence à 0) qui indique où se fera la prochaine écriture ou la prochaine lecture.
+      </p>
+      <div class="div_1elem">
+
+        <h3>Ecriture</h3>
+        <p>Nom de la fonction : <b>write.</b><br><br>
+          Prototype :<br><br>
+          ssize_t write(int fd, void *src, size_t nb); <br><br>
+          Valeurs de retour :<br><br>
+          Si succès, write retourne le nombre d'octets effectivement écrits, -1 sinon.<br>
+          <b>write</b> peut retourner une valeur inférieure à la taille demandée à écrire si le disque est plein. Ce
+          n'est pas une erreur.<br><br>
+          Fonctionnement :<br><br>
+          fd : descripteur du fichier où l'on veut écrire.<br>
+          src : adresse où les données à écrire sont stockées en mémoire.<br>
+          nb : taille en octets des données à écrire.<br><br>
+          La tête de lecture/écriture sera avancée de la taille des données effectivement écrites sur le
+          disque.<br><br>
+          Par défaut, pour un fichier ouvert en O_WRONLY ou en O_RDWR, la tête de lecture/écriture est
+          placée en tête du fichier lors de l'ouverture (position=0).<br><br>
+          Si on utilise l'option O_APPEND, à chaque appel de write, la tête de lecture/écriture sera
+          positionnée à la fin du fichier avant d'y écrire. Cela est indispensable lorsque deux processus accèdent au même fichier en écriture de manière
+          concurrente (pour un fichier de log par exemple). </p>
+      </div>
+      <div class="div_2elem separator_pos">
+        <h4>Exemple : Ecriture d'un tableau en un seul appel-système</h4>
+        <code>int fd, nbw,i;<br>
+          int tab[10];<br>
+          fd=open("nombres",O_WRONLY | O_CREAT,0666);<br>
+          if (fd < 0)<br>
+            {<br>
+            printf("Erreur d'ouverture\n");<br>
+            exit(-1);<br>
+            }<br>
+            for (i=0;i < 10;i++)<br>
+              {<br>
+              printf("Entrez la valeur de la case n°%d :",i);<br>
+              scanf("%d",&tab[i]);<br>
+              }<br>
+              nbw=write(fd,tab,10*sizeof(int));<br>
+              if (nbw < 0)<br>
+                {<br>
+                printf("Erreur d'écriture\n");<br>
+                exit(-1);<br>
+                }<br>
+                else if (nbw < 10*sizeof(int))<br>
+                  printf("Disque plein\n");
+        </code>
+      </div>
+      <div class="aside_right">
+        <h4>Exemple : Ecriture d'un seul élément </h4>
+        <code>int fd, nbecrits; <br>
+          int num;<br>
+          fd=open("data",O_RDWR | O_CREAT,0666);<br>
+          if (fd < 0)<br>
+            {<br>
+            printf("Erreur d'ouverture\n");<br>
+            exit(-1);<br>
+            }<br>
+            printf("Entrez une valeur numérique :");<br>
+            scanf("%d",&num);<br>
+            nbecrits=write(fd,&num,sizeof(int));<br>
+            if (nbecrits < 0)<br>
+              {<br>
+              printf("Erreur d'écriture\n");<br>
+              exit(-1);<br>
+              }<br>
+              else if (nbecrits < sizeof(int))<br>
+                printf("Disque plein\n");
+        </code>
+      </div>
+      <hr>
+      <div class="div_1elem">
+        <h3>Lecture</h3>
+        <p>Nom de la fonction : <b>read.</b><br><br>
+          Prototype :<br><br>
+          ssize_t read(int fd, void *dest, size_t nb);<br><br>
+          Valeurs de retour :<br><br>
+          Si succès, read retourne le nombre d'octets effectivement lus, -1 sinon.<br>
+          <b>read</b> peut retourner une valeur inférieure à la taille demandée en lecture si on est proche de la
+          fin du fichier et qu'il n'y a plus de données à lire. Si read retourne 0, c'est qu'on est à la fin du
+          fichier.<br><br>
+          Fonctionnement :<br><br>
+          fd : descripteur du fichier où l'on veut lire.<br>
+          dest : adresse où les données lues seront stockées en mémoire.<br>
+          nb : taille en octets des données à lire.<br><br>
+          La tête de lecture/écriture sera avancée de la taille des données effectivement lues sur le disque.</p>
+      </div>
+      <div class="div_2elem separator_pos">
+        <h4>Exemple : Lecture d'un tableau en un seul appel-système</h4>
+        <p>On suppose que le fichier "nombres" créé précédemment existe.</p>
+        <code>int fd,nbl,i;<br>
+          int tab[10];<br>
+          fd=open("nombres",O_RDWR);<br>
+          if (fd < 0)<br>
+            {<br>
+            printf("Erreur d'ouverture\n");<br>
+            exit(-1);<br>
+            }<br>
+            nbl=read(fd,tab,10*sizeof(int));<br>
+            if (nbl < 0)<br>
+              {<br>
+              printf("Erreur de lecture\n");<br>
+              exit(-1);<br>
+              }<br>
+              else if (nbl < 10*sizeof(int))<br>
+                printf("Pas assez de données à lire : fin du fichier atteinte\n");<br>
+                for (i=0;i < nbl;i++)<br>
+                  printf("valeur lue n°%d=%d\n",i,tab[i]); </code>
+
+      </div>
+      <div class="aside_right">
+        <h4>Exemple : Lecture d'un seul élément</h4>
+        <p>On suppose que le fichier "data" créé précédemment existe.</p>
+        <code>int fd, nbecrits,nblus;<br>
+          int num;<br>
+          fd=open("data",O_RDONLY);<br>
+          nblus=read(fd,&num,sizeof(int));<br>
+          printf("donnée lue :%d\n",num);<br>
+          if (nblus < 0)<br>
+            {<br>
+            printf("Erreur de lecture\n");<br>
+            exit(-1);<br>
+            }<br>
+            else if (nblus < sizeof(int))<br>
+              printf("Pas assez de données à lire:fin du fichier atteinte \n");
+        </code>
+      </div>
+      <hr>
+    </section>
+    <section class="section3">
+      <h1>Déplacement dans un fichier</h1>
+      <p>Il est possible de déplacer la tête de lecture/écriture dans un fichier et donc de lire ou d'écrire à
+        l'endroit du fichier que l'on désire.<br><br>
+        Nom de la fonction :<b>lseek</b><br><br>
+        Prototype :<br><br>
+        off_t lseek(int fd, off_t nb, int depart);<br><br>
+        Valeurs de retour :<br><br>
+        Si succès, retourne la valeur de la nouvelle position de la tête de lecture/écriture dans le fichier
+        (= nombre d'octets depuis le début du fichier), -1 sinon. <br><br>
+        Fonctionnement :<br><br>
+        fd : descripteur du fichier concerné.<br>
+        nb : valeur du déplacement en octets.<br>
+        depart : point de départ du déplacement.<br><br>
+        La valeur de "depart" peut être :</p>
+      <ul>
+        <li>SEEK_SET : la nouvelle position sera calculée par rapport au début du fichier<br>
+          .nouvelle_position=nb</li>
+        <li>SEEK_CUR : la nouvelle position sera calculée par rapport à la position actuelle<br>
+          .nouvelle_position=position_actuelle+nb</li>
+        <li>SEEK_END : la nouvelle position sera calculée par rapport à la fin du fichier<br>
+          .nouvelle_position=fin_du_fichier+nb</li>
+      </ul>
+      <p>Pour une valeur de SEEK_CUR ou SEEK_END, nb peut être positif ou négatif (on peut reculer
+        dans le fichier). Pour SEEK_SET, nb ne peut être que positif (on ne peut reculer au-delà du début
+        du fichier)</p>
+      <div class="div_2elem separator_neg">
+        <h4>Exemple</h4>
+        <p>Un fichier nommé "fic" doit exister dans le répertoire courant.
+        </p>
+        <code>int fd;<br>
+          int nblus;<br>
+          char c;<br>
+          off_t pos;<br>
+          fd1=open("fic",O_RDONLY);<br>
+          fd2=open("fic_reverse",O_WRONLY|<br>O_CREAT,0666);<br>
+          pos=lseek(fd1,-1,SEEK_END);<br>
+          while (pos>=0)<br>
+          {<br>
+          read(fd1,&c,1);<br>
+          write(fd2,&c,1);<br>
+          pos=lseek(fd1,-2,SEEK_CUR);<br>
+          } </code>
+      </div>
+      <div class="aside_right">
+        <h3>Cas de SEEK_END avec nb>0 :</h3>
+        <p> Il est en effet possible de déplacer la tête de lecture/écriture au-delà de la fin d'un fichier.
+          Il ne se passe rien tant qu'on n'effectue pas d'écriture.<br><br>
+          Si on écrit sur le disque, il va alors se créer un trou, rempli de zéros, entre la fin précédente du
+          fichier et l'écriture que l'on vient d'effectuer.<br><br>
+          La taille du fichier sera alors augmentée de la taille du trou, mais celui-ci n'occupera pas d'espace
+          disque.<br><br>
+          Ce type de fichier à trous est appelée "sparse file". Ces fichiers permettent de créer des fichiers
+          de grande taille rapidement, sans le temps d'allocation initial, les blocs n'étant alloués
+          physiquement qu'en cas de besoin.</p>
+      </div><br>
+      <div class="div_1elem">
+        <h4>Exemple</h4>
+        <code>int fd;<br>
+          char c='a';<br>
+          fd=open("fic",O_WRONLY | O_CREAT,0666);<br>
+          write(fd,&c,1);<br>
+          lseek(fd,5,SEEK_END);<br>
+          write(fd,&c,1);<br>
+        </code>
+        <p>Création du fichier : la tête de lecture/écriture est au début du fichier</p>
+        <table border="1" cellpadding="27" BORDERCOLOR="#fff">
+          <tr>
+            <th> </th>
+          </tr>
+        </table>
+        <p>Ecriture du caractère contenu dans c : la tête de lecture/écriture est avancée de la taille d'un
+          caractère, soit un octet. </p>
+        <table border="1" cellpadding="15" BORDERCOLOR="#fff">
+          <tr>
+            <th>'a'</th>
+          </tr>
+        </table>
+        <p>Déplacement de 5 octets à partir de la fin du fichier : le trou n'est que virtuel car on n'a pas écrit
+          sur le disque mais la tête de lecture/écriture est 5 octets après la fin du fichier.
+        </p>
+        <table border="1" cellpadding="15" BORDERCOLOR="#fff">
+          <tr>
+            <th>'a'</th>
+            <th>X</th>
+            <th>X</th>
+            <th>X</th>
+            <th>X</th>
+            <th>X</th>
+          </tr>
+        </table>
+        <p>Ecriture du caractère contenu dans c : le trou se forme et est empli de 0.</p>
+        <table border="1" cellpadding="15" BORDERCOLOR="#fff">
+          <tr>
+            <th>'a'</th>
+            <th>0</th>
+            <th>0</th>
+            <th>0</th>
+            <th>0</th>
+            <th>'a'</th>
+          </tr>
+        </table>
+        <p>Le fichier aura donc une taille de 7 octets, mais n'en occupera que 2 sur le disque.</p>
+      </div>
+    </section>
+    <section class="section1">
+      <h1>Clonage de descripteur</h1>
+      <div class="div_2elem separator_pos">
+        <p>Il est possible de copier un descripteur dans un autre. Cela permet notamment de reproduire les
+          redirections du shell Linux. <br><br>
+          Nom de la fonction : <b>dup2</b><br><br>
+          Prototype :<br><br>
+          int dup2(int oldfd, int newfd);<br><br>
+          Valeurs de retour :<br><br>
+          Si succès, dup2 retourne la valeur du nouveau descripteur, -1 si échec.<br><br>
+          Fonctionnement :<br><br>
+          oldfd : descripteur à copier<br>
+          newfd : nouveau descripteur qui référencera le même fichier que oldfd. Si newfd est déjà attribué
+          à un fichier ouvert, il sera d'abord fermé avant la copie.</p>
+      </div>
+      <div class="aside_right">
+        <h4>Exemple</h4>
+        <code>int fd1; <br>
+          int data,lu;<br>
+          fd1=open("testdup2_out",O_WRONLY|O_CREAT,0666);<br>
+          dup2(fd1,STDOUT_FILENO); <br>
+          printf("hello\n");</code>
+      </div>
+    </section>
+    <section class="section4">
+      <h1> Fermeture de fichier</h1>
+      <div class="div_1elem">
+        <p>Nom de la fonction :<b>close</b><br><br>
+          Prototype :<br><br>
+          int close(int fd);<br><br>
+          Valeurs de retour :<br><br>
+          Retourne 0 si succès, -1 sinon.<br><br>
+          Fonctionnement :<br><br>
+          fd : descripteur du fichier à fermer.<br><br>
+          Le fichier sera fermé, le descripteur sera libéré et donc réutilisable pour un autre fichier. Un appel
+          à close est automatique pour tous les fichiers ouverts lorsqu'un processus se termine. </p>
+      </div>
+    </section>
+    <section class="section1">
+      <h1>Performances</h1>
+      <div class="div_1elem">
+        <p>Les appels-système du SGF read et write sont aussi appelés "Unbuffered I/O", ou E/S sans
+          tampon. Cela signifie que chaque lecture ou écriture se fera directement sur le disque, sans
+          passer par un tampon intermédiaire en mémoire. C'est la principale différence avec les E/S
+          standards (cf Chapitre 2) où sont gérés automatiquement des buffers.<br><br>
+          Par conséquent, si on lit un fichier caractère par caractère, on aura un accès au disque par
+          caractère, ce qui est très lent.<br>
+          Il est donc conseillé, pour améliorer les performances, de gérer soi-même un buffer mémoire :
+          on lit les données par bloc et on traite les données lues en mémoire. On minimise ainsi les
+          appels-système et les accès disque si coûteux en temps.<br><br>
+          L'avantage de cette méthode, c'est qu'on sait exactement quelle taille a le buffer et ce qu'on y
+          range.<br><br>
+          La taille conseillée pour un buffer mémoire est celle d'un bloc disque (généralement 4096 octets).<br><br>
+          (voir TP1 exercices 1, 2 et 3)</p>
+      </div>
+    </section>
+  </main>
+</body>
+
+</html>
